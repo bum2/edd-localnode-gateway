@@ -3,11 +3,32 @@
 Plugin Name: Easy Digital Downloads - LocalNode Gateway
 Plugin URL: https://github.com/bum2
 Description: A local-nodes gateway for Easy Digital Downloads, forked from Pippin's example.
-Version: 0.1
+Version: 0.1.1
 Author: Bumbum
 Author URI: https://github.com/bum2
 */
 
+// Add a custom Post-Type
+add_action( 'init', 'create_posttype' );
+function create_posttype() {
+  register_post_type( 'gfc_localnode',
+    array(
+      'labels' => array(
+        'name' => __( 'LocalNodes' ),
+        'singular_name' => __( 'LocalNode' )
+      ),
+      'public' => true,
+      'has_archive' => true,
+      'rewrite' => array('slug' => 'localnodes'),
+			'supports' => array('title', 'editor', 'thumbnail', 'custom-fields'),
+    )
+  );
+}
+
+
+
+
+//// GATEWAY SPECIFIC ////
 
 // registers the gateway
 function fair_edd_register_gateway($gateways) {
@@ -88,8 +109,8 @@ function fair_edd_process_payment($purchase_data) {
 
 		if($merchant_payment_confirmed) { // this is used when processing credit cards on site
 
-			// once a transaction is successful, set the purchase to complete
-			edd_update_payment_status($payment, 'complete');
+			// once a transaction is successful, set the purchase to complete // bumbum not complete, it is manual
+			//edd_update_payment_status($payment, 'complete');
 
 			// go to the success page
 			edd_send_to_success_page();
@@ -103,8 +124,8 @@ function fair_edd_process_payment($purchase_data) {
 	}
 
 	if( $fail !== false ) {
-		// if errors are present, send the user back to the purchase page so they can be corrected
-		edd_send_back_to_checkout('?payment-mode=' . $purchase_data['post_data']['edd-gateway']);
+		// if errors are present, send the user back to the purchase page so they can be corrected // bumbum checkout without args
+		edd_send_back_to_checkout('');//'?payment-mode=' . $purchase_data['post_data']['edd-gateway']);
 	}
 }
 add_action('edd_gateway_localnode_gateway', 'fair_edd_process_payment');
