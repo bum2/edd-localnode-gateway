@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Easy Digital Downloads - LocalNode Gateway
-Plugin URL: https://github.com/bum2
-Description: A local-nodes gateway for Easy Digital Downloads, forked from Pippin's example.
+Plugin URL: https://github.com/bum2/edd-localnode-gateway
+Description: A local-nodes gateway for Easy Digital Downloads, forked from Pippin's example and Aleph's manual gateway
 Version: 0.2
 Author: Bumbum
 Author URI: https://github.com/bum2
@@ -91,7 +91,7 @@ function create_posttype() {
       'has_archive' => true,
       'rewrite' => array('slug' => 'localnodes'),
       'hierarchical' => true,
-      'supports' => array('title', 'editor', 'thumbnail', 'page-attributes', 'custom-fields'),
+      'supports' => array('title', 'editor', 'thumbnail', 'page-attributes', 'custom-fields', 'author'),
     )
   );
 }
