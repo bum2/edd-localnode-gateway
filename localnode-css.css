@@ -1,0 +1,16 @@
+#localnode-menu {
+  /*display: none;*/
+  width: 200px;
+}
+
+#localnode-menu ul {
+  width: 200px;
+}
+
+#localnode-menu a:link, #localnode-menu a:active, #localnode-menu a:visited {
+    color: rgb(81, 90, 99);
+}
+
+#post-85 p {
+  color: rgb(117, 117, 117);
+}
