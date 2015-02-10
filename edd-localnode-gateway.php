@@ -190,10 +190,16 @@ function fair_edd_add_settings($settings) {
 		array(
 			'id' => 'localnode_email_from',
 			'name' => __('From Email Source', 'edd-localnode-gateway'),
-			'desc' => __('Choose the email From address on user notification, if use the general one setted in the GetMethod (download) or the one setted in the choosed LocalNode (custom field: localnode_email)', 'edd-localnode-gateway'),
+			'desc' => __('Choose the remitent email From address on user notification, if use the general one setted in the GetMethod (download) or the one setted in the choosed LocalNode (custom field: localnode_email)', 'edd-localnode-gateway'),
 			'type' => 'select',
 			'options' => array(1 => 'ONE', 2 => 'LOCALNODE'),
 			'std'  => 1
+		),
+		array(
+			'id' => 'localnode_notify_node',
+			'name' => __('LocalNode Email Notification', 'edd-localnode-gateway'),
+			'desc' => __('Check if you want to notify also the localnode on user purchase (general admin addresses are always notified)', 'edd-localnode-gateway'),
+			'type' => 'checkbox'
 		),
 	);
 
@@ -218,8 +224,10 @@ function edd_localnode_payment_receipt_after($payment){ // TODO
 add_action('edd_payment_receipt_after_table', 'edd_localnode_payment_receipt_after');
 
 
+////   E M A I L   T O   U S E R   ////
+
 //Sent transfer instructions
-function localnode_email_purchase_order ( $payment_id ) {
+function localnode_email_purchase_order ( $payment_id, $admin_notice = true ) {
 
 	global $edd_options;
 
@@ -272,7 +280,88 @@ function localnode_email_purchase_order ( $payment_id ) {
 		wp_mail( $to, $subject, $message, $headers, $attachments );
 	}
 
+	if ( $admin_notice && ! edd_admin_notices_disabled( $payment_id ) ) {
+		do_action( 'localnode_admin_sale_notice', $payment_id, $payment_data );
+	}
 }
+
+////   E M A I L   T O   A D M I N S   ////
+
+/**
+ * Sends the Admin Sale Notification Email
+ *
+ * @since 1.4.2
+ * @param int $payment_id Payment ID (default: 0)
+ * @param array $payment_data Payment Meta and Data
+ * @return void
+ */
+function localnode_admin_email_notice( $payment_id = 0, $payment_data = array() ) {
+	global $edd_options;
+
+	/* Send an email notification to the admin */
+	$admin_email = localnode_get_admin_notice_emails( $payment_id ); // bumbum
+	$user_id     = edd_get_payment_user_id( $payment_id );
+	$user_info   = maybe_unserialize( $payment_data['user_info'] );
+
+	if ( isset( $user_id ) && $user_id > 0 ) {
+		$user_data = get_userdata($user_id);
+		$name = $user_data->display_name;
+	} elseif ( isset( $user_info['first_name'] ) && isset( $user_info['last_name'] ) ) {
+		$name = $user_info['first_name'] . ' ' . $user_info['last_name'];
+	} else {
+		$name = $user_info['email'];
+	}
+
+	$admin_message = edd_get_email_body_header();
+	$admin_message .= edd_get_sale_notification_body_content( $payment_id, $payment_data );
+	$admin_message .= edd_get_email_body_footer();
+
+	if( ! empty( $edd_options['sale_notification_subject'] ) ) {
+		$admin_subject = wp_strip_all_tags( $edd_options['sale_notification_subject'], true );
+	} else {
+		$admin_subject = sprintf( __( 'New download purchase - Order #%1$s', 'edd' ), $payment_id );
+	}
+
+	$admin_subject = edd_do_email_tags( $admin_subject, $payment_id );
+	$admin_subject = apply_filters( 'edd_admin_sale_notification_subject', $admin_subject, $payment_id, $payment_data );
+
+	$from_name  = isset( $edd_options['from_name'] )  ? $edd_options['from_name']  : get_bloginfo('name');
+	$from_email = isset( $edd_options['from_email'] ) ? $edd_options['from_email'] : get_option('admin_email');
+
+	$admin_headers = "From: " . stripslashes_deep( html_entity_decode( $from_name, ENT_COMPAT, 'UTF-8' ) ) . " <$from_email>\r\n";
+	$admin_headers .= "Reply-To: ". $from_email . "\r\n";
+	//$admin_headers .= "MIME-Version: 1.0\r\n";
+	$admin_headers .= "Content-Type: text/html; charset=utf-8\r\n";
+	$admin_headers .= apply_filters( 'edd_admin_sale_notification_headers', $admin_headers, $payment_id, $payment_data );
+
+	$admin_attachments = apply_filters( 'edd_admin_sale_notification_attachments', array(), $payment_id, $payment_data );
+
+	wp_mail( $admin_email, $admin_subject, $admin_message, $admin_headers, $admin_attachments );
+}
+add_action( 'localnode_admin_sale_notice', 'localnode_admin_email_notice', 10, 2 );
+
+/**
+ * Retrieves the emails for which admin notifications are sent to (these can be
+ * changed in the EDD Settings)
+ *
+ * @since 1.0
+ * @global $edd_options Array of all the EDD Options
+ * @return void
+ */
+function localnode_get_admin_notice_emails( $payment_id ) {
+	global $edd_options;
+
+	$emails = isset( $edd_options['admin_notice_emails'] ) && strlen( trim( $edd_options['admin_notice_emails'] ) ) > 0 ? $edd_options['admin_notice_emails'] : get_bloginfo( 'admin_email' );
+
+	if(! empty( $edd_options['localnode_notify_node'] ) ) {
+		$emails .= "\n".localnode_email_tag_NodeEmail( $payment_id ); //edd_do_email_tags( $emails, $payment_id ); // bumbum
+	}
+
+	$emails = array_map( 'trim', explode( "\n", $emails ) );
+
+	return apply_filters( 'edd_admin_notice_emails', $emails, $payment_id );
+}
+
 
 
 ////  E M A I L  T A G S  ////
@@ -434,7 +523,7 @@ function localnode_display_form_select( $localnode, $nodeid ){
 function localnode_edd_display_checkout_fields() { // get user's localnode if they already have one stored
   $download_ids = edd_get_cart_contents();
   $download_ids = wp_list_pluck( $download_ids, 'id' );
-  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){
+  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){ // only one item on cart!
     if ( is_user_logged_in() ) {
       $user_id = get_current_user_id();
       $localnode = get_the_author_meta( '_edd_user_localnode', $user_id );
@@ -469,7 +558,7 @@ add_action( 'edd_purchase_form_user_info', 'localnode_edd_display_checkout_field
 function localnode_edd_required_checkout_fields( $required_fields ) {
   $download_ids = edd_get_cart_contents();
   $download_ids = wp_list_pluck( $download_ids, 'id' );
-  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){
+  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){ // only one item on cart!
     $user_id = get_current_user_id();
     $required_fields['edd_localnode'] = array(
             'error_id' => 'invalid_localnode',
@@ -488,7 +577,7 @@ add_filter( 'edd_purchase_form_required_fields', 'localnode_edd_required_checkou
 function localnode_edd_validate_checkout_fields( $valid_data, $data ) {
   $download_ids = edd_get_cart_contents();
   $download_ids = wp_list_pluck( $download_ids, 'id' );
-  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){
+  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){ // only one item on cart!
     $user_id = get_current_user_id();
     if ( empty( $data['edd_localnode'] ) || $data['edd_localnode'] == '') {
       edd_set_error( 'invalid_localnode', __('Please choose your nearest LocalNode.', 'edd-localnode-gateway') );

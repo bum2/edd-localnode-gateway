@@ -97,6 +97,14 @@ add_action( 'submitpost_box', 'localnode_edd_wp_show_post_fields' );
 function localnode_wp_edd_fields () {
 
 	$localnode_gateway_settings = array(
+		// bumbum
+		array(
+			'id' => 'localnode_edd_wp_post_receipt',
+			'name' => __( 'localnode_gateway_receipt', 'edd-localnode-gateway' ),
+			'desc' => __('localnode_gateway_receipt_desc', 'edd-localnode-gateway'),// . '<br/>' . edd_get_emails_tags_list()  ,
+			'type' => 'rich_editor',
+		),
+		//
 		array(
 			'id' => 'localnode_edd_wp_post_from_email',
 			'name' => __( 'from_gateway_email', 'edd-localnode-gateway' ),
@@ -118,14 +126,6 @@ function localnode_wp_edd_fields () {
 			'desc' => __('body_gateway_mail_desc', 'edd-localnode-gateway') . '<br/>' . edd_get_emails_tags_list()  ,
 			'type' => 'rich_editor',
 		),
-		// bumbum
-		array(
-			'id' => 'localnode_edd_wp_post_receipt',
-			'name' => __( 'localnode_gateway_receipt', 'edd-localnode-gateway' ),
-			'desc' => __('localnode_gateway_receipt_desc', 'edd-localnode-gateway'),// . '<br/>' . edd_get_emails_tags_list()  ,
-			'type' => 'rich_editor',
-		),
-		//
 	);
 
 	return $localnode_gateway_settings;
