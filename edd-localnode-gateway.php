@@ -504,7 +504,7 @@ function localnode_display_form_select( $localnode, $nodeid ){
   	//'show_date'    => '',
   	//'sort_column'  => 'menu_order, post_title',
     //'sort_order'   => '',
-  	'title_li'     => __('Choose...'),
+  	'title_li'     => __('Choose...', 'edd-localnode-gateway'),
   	//'walker'       => ''
   );
   echo '<ul id="localnode-menu">';
@@ -523,7 +523,8 @@ function localnode_display_form_select( $localnode, $nodeid ){
 function localnode_edd_display_checkout_fields() { // get user's localnode if they already have one stored
   $download_ids = edd_get_cart_contents();
   $download_ids = wp_list_pluck( $download_ids, 'id' );
-  if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){ // only one item on cart!
+  if ( get_post_meta( $download_ids[0], '_edd_gateway', true) == 'localnode' ) {  // only one item on cart!
+  //if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){ // only one item on cart!
     if ( is_user_logged_in() ) {
       $user_id = get_current_user_id();
       $localnode = get_the_author_meta( '_edd_user_localnode', $user_id );
@@ -579,9 +580,17 @@ function localnode_edd_validate_checkout_fields( $valid_data, $data ) {
   $download_ids = wp_list_pluck( $download_ids, 'id' );
   if( has_term( 'LocalNode', 'download_category', $download_ids[0] ) ){ // only one item on cart!
     $user_id = get_current_user_id();
-    if ( empty( $data['edd_localnode'] ) || $data['edd_localnode'] == '') {
+		$args = array(
+			'post_parent' => $data['edd_localnode_id'],
+			'post_type'   => 'gfc_localnode',
+			'posts_per_page' => -1,
+			'post_status' => 'published' );
+		$poes = get_children($args);
+    if ( empty( $data['edd_localnode'] ) || $data['edd_localnode'] == '' || empty( $data['edd_localnode_id'] ) || $data['edd_localnode_id'] == '0') {
       edd_set_error( 'invalid_localnode', __('Please choose your nearest LocalNode.', 'edd-localnode-gateway') );
-    }
+    } else if (count($poes) > 0){
+			edd_set_error( 'invalid_localnode', __('Please choose your nearest Point Of Exchange inside this LocalNode', 'edd-localnode-gateway') );
+		}
   }
 }
 add_action( 'edd_checkout_error_checks', 'localnode_edd_validate_checkout_fields', 10, 2 );

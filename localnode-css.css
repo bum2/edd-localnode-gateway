@@ -1,10 +1,15 @@
 #localnode-menu {
   /*display: none;*/
   width: 200px;
+  padding: 0;
 }
-
+#localnode-menu li {
+  height: 30px;
+  padding: 1px 1px 1px 10px;
+}
 #localnode-menu ul {
   width: 200px;
+  padding: 0;
 }
 
 #localnode-menu a:link, #localnode-menu a:active, #localnode-menu a:visited {
