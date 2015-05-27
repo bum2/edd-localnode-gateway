@@ -436,8 +436,12 @@ function localnode_email_tag_NodeContent( $payment_id ) {
   $paymeta = edd_get_payment_meta($payment_id);
   //$nodename = $paymeta['localnode'];
   $nodeid = $paymeta['localnode_id'];
-  $node = get_post($nodeid);
-  $NodeContent = $node->post_content;
+  if($nodeid){
+    $node = get_post($nodeid);
+    $NodeContent = $node->post_content;
+  } else {
+    $NodeContent = '';
+  }
   return $NodeContent;
 }
 
@@ -672,8 +676,8 @@ add_action( 'edd_complete_purchase', 'localnode_edd_store_usermeta' );
 function localnode_edd_save_extra_profile_fields( $user_id ) {
   if ( ! current_user_can( 'edit_user', $user_id ) )
     return false;
-  update_user_meta( $user_id, '_edd_user_localnode', $_POST['edd_localnode'] );
-  update_user_meta( $user_id, '_edd_user_localnode_id', $_POST['edd_localnode_id'] );
+  update_user_meta( $user_id, '_edd_user_localnode', $_POST['_edd_user_localnode'] );
+  update_user_meta( $user_id, '_edd_user_localnode_id', $_POST['_edd_user_localnode_id'] );
 }
 add_action( 'personal_options_update', 'localnode_edd_save_extra_profile_fields' );
 add_action( 'edit_user_profile_update', 'localnode_edd_save_extra_profile_fields' );

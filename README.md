@@ -20,6 +20,7 @@ This plugin adds a new gateway, with its own settings, emails, receipt text and 
 
 
 
+
 ### Contribute donating to bum2:
 
 faircoin:fThesXCU7FfekYNNui2MtELfCNoa9pctJk

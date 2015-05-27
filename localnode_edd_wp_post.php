@@ -12,7 +12,7 @@ function localnode_text_callback ( $args, $post_id ) {
 		" <th scope='row'> " . $args['name'] . " </th> \n" .
 		" <td><input type='text' class='regular-text' id='" . $args['id'] . "'" .
 		" name='" . $args['id'] . "' value='" .  $value   . "' />\n" .
-		" <label for='" . $name . "'> " . $args['desc'] . "</label>" .
+		" <label for='" . $args['name'] . "'> " . $args['desc'] . "</label>" .
 		"</td></tr>";
 
 	return $output;
@@ -32,7 +32,7 @@ function localnode_rich_editor_callback ( $args, $post_id ) {
 		wp_editor( stripslashes( $value ) , $args['id'], array( 'textarea_name' => $args['id'] ) );
 	$output .= ob_get_clean();
 
-	$output .= " <label for='" . $name . "'> " . $args['desc'] . "</label>" .
+	$output .= " <label for='" . $args['name'] . "'> " . $args['desc'] . "</label>" .
 		"</td></tr>\n";
 
 	return $output;
