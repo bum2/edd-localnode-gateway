@@ -277,7 +277,7 @@ function localnode_email_purchase_order ( $payment_id, $admin_notice = true ) {
 	$headers = apply_filters( 'edd_receipt_headers', $headers, $payment_id, $payment_data );
 
 	if ( apply_filters( 'edd_email_purchase_receipt', true ) ) {
-		wp_mail( $to, $subject, $message, $headers, $attachments );
+		wp_mail( $to, $subject, $message, $headers );//, $attachments );
 	}
 
 	if ( $admin_notice && ! edd_admin_notices_disabled( $payment_id ) ) {
